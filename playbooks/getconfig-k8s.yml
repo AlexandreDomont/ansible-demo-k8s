@@ -1,0 +1,76 @@
+- hosts: localhost
+  gather_facts: true
+  vars:
+    scw_cluster_id: "5317b6f1-4c39-40dd-a3cc-2909163326fd"
+    
+
+  pre_tasks:
+    - name: Vérifier si kubectl est déjà présent
+      ansible.builtin.command: bash -lc 'command -v kubectl'
+      register: kubectl_check
+      changed_when: false
+      failed_when: false
+
+    - name: Installer kubectl via snap sur Ubuntu
+      community.general.snap:
+        name: kubectl
+        state: present
+        classic: true
+      when:
+        - kubectl_check.rc is defined and kubectl_check.rc != 0
+        - ansible_facts['os_family'] == "Debian"
+        - ansible_facts['distribution'] == "Ubuntu"
+
+    # --- Exemple Rocky (décommente si besoin) ---
+    - name: Ajouter le dépôt Kubernetes pour Rocky
+      ansible.builtin.copy:
+        dest: /etc/yum.repos.d/kubernetes.repo
+        mode: "0644"
+        content: |
+          [kubernetes]
+          name=Kubernetes
+          baseurl=https://pkgs.k8s.io/core:/stable:/v1.30/rpm/
+          enabled=1
+          gpgcheck=1
+          gpgkey=https://pkgs.k8s.io/core:/stable:/v1.30/rpm/repodata/repomd.xml.key
+      when:
+        - kubectl_check.rc is defined and kubectl_check.rc != 0
+        - ansible_facts['os_family'] == "RedHat"
+  
+    - name: Installer kubectl sur Rocky
+      ansible.builtin.yum:
+        name: kubectl
+        state: present
+      when:
+        - kubectl_check.rc is defined and kubectl_check.rc != 0
+        - ansible_facts['os_family'] == "RedHat"
+
+  tasks:
+    - name: Télécharger le kubeconfig depuis Scaleway API
+    # Le résultat est un JSON: { "name": "...", "content_type": "...", "content": "<base64>" }
+      ansible.builtin.uri:
+        url: "https://api.scaleway.com/k8s/v1/regions/{{ scw_region }}/clusters/{{ scw_cluster_id }}/kubeconfig"
+        method: GET
+        headers:
+          X-Auth-Token: "{{ scw_token }}"
+        return_content: yes
+      register: kubeconfig_result
+      no_log: true
+
+    - name: Extraire le champ JSON (si Ansible n’a pas déjà parsé)
+      ansible.builtin.set_fact:
+        kubejson: "{{ kubeconfig_result.json | default(kubeconfig_result.content | from_json) }}"
+
+    - name: Créer le dossier ~/.kube si besoin
+      ansible.builtin.file:
+        path: "~/.kube"
+        state: directory
+        mode: "0700"
+
+    - name: Écrire le kubeconfig YAML décodé (base64 → texte)
+      ansible.builtin.copy:
+        content: "{{ kubejson.content | b64decode }}"
+        dest: "~/.kube/config"
+        mode: "0600"
+      no_log: true
+

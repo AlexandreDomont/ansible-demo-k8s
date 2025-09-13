@@ -1,0 +1,4 @@
+collections:
+  - name: scaleway.scaleway
+    version: ">=0.20.0"   # optionnel, mais recommandé
+  - name: community.general

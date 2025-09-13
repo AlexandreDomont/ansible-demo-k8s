@@ -1,0 +1,86 @@
+---
+# ansible-galaxy collection install -r requirements.yml
+# python3 -m pip install -r requirements.txt
+
+- name: Créer un cluster Kapsule (DEV)
+  hosts: local
+  gather_facts: false
+  collections:
+    - scaleway.scaleway
+
+  vars:
+    cluster_name: "dev1-demo-*"
+    # Laisse 'latest' pour suivre l’offre managée ; remplace si tu veux figer.
+    k8s_version: 1.33.4
+    scw_region: "fr-par"
+    cluster_tags: ["ansible", "training", "dev1"]
+    artifacts_dir: "../artifacts"
+    cluster_id_file: "{{ artifacts_dir }}/cluster_id.txt"
+
+  environment:  # même mécanique que tes playbooks existants
+    SCW_ACCESS_KEY: "{{ access_key }}"
+    SCW_SECRET_KEY: "{{ secret_key }}"
+    SCW_DEFAULT_ORGANIZATION_ID: "{{ default_organization_id }}"
+    SCW_DEFAULT_PROJECT_ID: "{{ default_project_id }}"
+    SCW_DEFAULT_REGION: "{{ scw_region }}"
+    
+  tasks:
+    - name: S'assurer que artifacts/ existe
+      ansible.builtin.file:
+        path: "{{ artifacts_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Créer / mettre à jour le cluster Kapsule
+      scaleway_k8s_cluster:
+        state: present
+        name: "{{ cluster_name }}"
+        description: "Cluster DEV créé via Ansible (Ubuntu 25.04 / Py 3.13)"
+        version: "{{ k8s_version }}"
+        region: "{{ scw_region }}"
+        project_id: "{{ default_project_id }}"
+        type_: "kapsule"   # param avec underscore (cf. ton fichier)  # :contentReference[oaicite:2]{index=2}
+        cni: "calico"
+        # Renseigne l'ID si tu veux le cluster dans un VPC privé :
+        private_network_id: "{{ scw_private_network_id | default(omit) }}"
+        tags: "{{ cluster_tags }}"
+      register: scw_cluster
+
+    - name: Extraire et vérifier l'ID du cluster (robuste)
+      ansible.builtin.set_fact:
+        cluster_id: >-
+          {{ scw_cluster.data.id
+             | default(scw_cluster.id, true)
+             | default('', true) }}
+    - ansible.builtin.assert:
+        that:
+          - cluster_id is defined
+          - (cluster_id | length) > 0
+
+    - name: Sauvegarder l'ID du cluster
+      ansible.builtin.copy:
+        dest: "{{ cluster_id_file }}"
+        content: "{{ cluster_id | trim }}\n"
+        mode: "0644"
+
+    - name: Afficher l'ID
+      ansible.builtin.debug:
+        msg: "Cluster ID = {{ cluster_id }}"
+
+    - name: Créer un pool DEV1 fixe (2 nœuds)
+      scw_k8s_pool:
+        region: fr-par
+        project_id: "{{ default_project_id }}"
+        cluster_id: "{{ cluster_id }}"
+        name: dev1-pool
+        node_type: DEV1-M
+        size: 2
+        autoscaling: false
+        container_runtime: containerd
+        root_volume_type: l_ssd
+        autohealing: true
+        wait: false
+        wait_timeout: 900
+        wait_interval: 3          # sondage un peu plus fréquent
+        debug_poll: true 
+        state: present

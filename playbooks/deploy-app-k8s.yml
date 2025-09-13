@@ -1,0 +1,109 @@
+---
+- name: Déployer une app demo sur K8s Scaleway avec NodePort
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    kubeconfig_path: "~/.kube/config"
+
+    namespace_demo: "demo"
+    app_name: "hello-web"
+    image: "hashicorp/http-echo:1.0.0"
+    replicas: 2
+    container_port: 5678
+
+    service_port: 80
+    node_port: 30080   # doit être compris entre 30000 et 32767
+
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+  tasks:
+    - name: Créer le namespace
+      kubernetes.core.k8s:
+        state: present
+        kind: Namespace
+        name: "{{ namespace_demo }}"
+
+    - name: Déployer le Deployment
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: "{{ app_name }}"
+            namespace: "{{ namespace_demo }}"
+          spec:
+            replicas: "{{ replicas }}"
+            selector:
+              matchLabels:
+                app: "{{ app_name }}"
+            template:
+              metadata:
+                labels:
+                  app: "{{ app_name }}"
+              spec:
+                containers:
+                  - name: "{{ app_name }}"
+                    image: "{{ image }}"
+                    args: ["-text=Hello from Scaleway NodePort 👋"]
+                    ports:
+                      - containerPort: "{{ container_port }}"
+
+    - name: Créer le Service de type NodePort
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: "{{ app_name }}"
+            namespace: "{{ namespace_demo }}"
+          spec:
+            type: NodePort
+            selector:
+              app: "{{ app_name }}"
+            ports:
+              - name: http
+                port: "{{ service_port }}"
+                targetPort: "{{ container_port }}"
+                nodePort: "{{ node_port }}"
+
+    - name: Récupérer la liste des Nodes via l'API
+      kubernetes.core.k8s_info:
+        kind: Node
+      register: node_info
+
+    - name: IP externes des nœuds
+      ansible.builtin.set_fact:
+        node_external_ips: >-
+          {{
+            (node_info.resources | default([]))
+            | json_query('[].status.addresses[?type==`ExternalIP`].address')
+            | default([])
+            | flatten
+            | unique
+          }}
+
+    - name: IP internes des nœuds
+      ansible.builtin.set_fact:
+        node_internal_ips: >-
+          {{
+            (node_info.resources | default([]))
+            | json_query('[].status.addresses[?type==`InternalIP`].address')
+            | default([])
+            | flatten
+            | unique
+          }}
+
+    - name: Choisir la liste finale d'IP (ExternalIP sinon InternalIP)
+      ansible.builtin.set_fact:
+        node_ips: "{{ (node_external_ips | length > 0) | ternary(node_external_ips, node_internal_ips) }}"
+
+    - name: Afficher les infos d’accès
+      ansible.builtin.debug:
+        msg:
+          - "Service NodePort: {{ node_port }}"
+          - "IPs de nœud: {{ node_ips }}"
+          - "Test direct: curl http://{{ node_ips[0] }}:{{ node_port }}"

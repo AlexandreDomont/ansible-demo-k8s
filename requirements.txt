@@ -1,0 +1,11 @@
+# SDK Scaleway pour les modules de la collection scaleway.scaleway
+scaleway
+
+# Client Python Kubernetes (utilisé par kubernetes.core / k8s)
+kubernetes>=24.2.0
+
+# Pin nécessaire aujourd’hui pour compatibilité du client k8s
+urllib3<3
+
+# jmespath est installé pour json_query
+jmespath

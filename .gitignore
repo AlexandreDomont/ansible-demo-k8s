@@ -1,0 +1,19 @@
+# Python / venv
+.venv/
+__pycache__/
+*.pyc
+
+# Ansible
+*.retry
+*.log
+*.facts
+*.vaultpass
+.vault_pass.txt
+
+# Secrets (en clair)
+.env
+**/secret.yml
+
+# OS/editor
+.DS_Store
+*.swp
