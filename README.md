@@ -8,8 +8,6 @@ Ce dépôt permet de réaliser une **démo de bout en bout** :
 
 > ✅ **Testé avec** : `ansible-core 2.15.x`
 
----
-
 ## 📁 Arborescence
 
 ```
@@ -34,8 +32,6 @@ Ce dépôt permet de réaliser une **démo de bout en bout** :
 └── requirements.yml             # collections Ansible Galaxy
 ```
 
----
-
 ## 🧰 Prérequis
 
 - **Python** ≥ 3.9  
@@ -44,8 +40,6 @@ Ce dépôt permet de réaliser une **démo de bout en bout** :
 - Un **compte Scaleway** + **clé API** (variables dans `secret.yml`, chiffré via Vault)
 
 > Optionnel mais recommandé : utiliser un **virtualenv** (`python3 -m venv .venv && source .venv/bin/activate`).
-
----
 
 ## 📦 Dépendances
 
@@ -59,8 +53,6 @@ python3 -m pip install -r requirements.txt
 > Les versions exactes sont gérées par `requirements.yml`/`requirements.txt`.  
 > Exemple côté Python : `scaleway`, `kubernetes>=24.2.0`, `urllib3<3`.  
 > Exemple côté Galaxy : `scaleway.scaleway`, `kubernetes.core`, `community.general`.
-
----
 
 ## 🔐 Secrets (Ansible Vault)
 
@@ -83,13 +75,11 @@ scw_region: "fr-par"
 
 > Le mot de passe Vault n’est **jamais** committé. Utilise `--ask-vault-pass` ou `--vault-id`.
 
----
-
 ## ▶️ Exécution (pas à pas)
 
 1. **Créer le cluster**
    ```bash
-   ansible-playbook playbooks/creat-cluster-k8s.yml      -e cluster_name=demo-k8s-cluster      --ask-vault-pass
+   ansible-playbook playbooks/creat-cluster-k8s.yml -e cluster_name=demo-k8s-cluster  --ask-vault-pass
    ```
    - L’ID du cluster peut être écrit dans `artifacts/cluster_id.txt` (selon le playbook).
 
@@ -105,12 +95,10 @@ scw_region: "fr-par"
 
 4. **Déployer l’application**
    ```bash
-   ansible-playbook playbooks/deploy-app-k8s.yml      --ask-vault-pass      -e scw_cluster_id="5317b6f1-4c39-40dd-a3cc-2909163326fd"
+   ansible-playbook playbooks/deploy-app-k8s.yml  --ask-vault-pass  -e scw_cluster_id="5317b6f1-4c39-40dd-a3cc-2909163326fd"
    ```
    > Si ton playbook a persisté l’ID du cluster :  
    > `-e scw_cluster_id="$(cat artifacts/cluster_id.txt)"`
-
----
 
 ## ⚙️ Inventaire & configuration
 
@@ -128,9 +116,6 @@ retry_files_enabled = False
 # Décommente si tu utilises un venv :
 # interpreter_python = .venv/bin/python
 ```
-
----
-
 ## 🧪 Dépannage rapide
 
 - **Erreur “Failed to import the required Python library (scaleway)”**  
@@ -146,8 +131,6 @@ retry_files_enabled = False
   → Vérifie le kubeconfig généré (chemin, variable `KUBECONFIG`, droits).  
   → `kubectl config get-contexts` pour inspecter le contexte.
 
----
-
 ## 📝 Licence
 
-Ce dépôt est distribué sous **licence MIT**. Voir le fichier `LICENSE`.
+Ce dépôt est distribué sous **licence MIT**.
