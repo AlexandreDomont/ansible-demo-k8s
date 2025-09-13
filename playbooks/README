@@ -3,3 +3,4 @@ python3 -m pip install -r requirements.txt
 ansible-playbook playbooks/creat-cluster-k8s.yml -e cluster_name=demo-k8s-cluster --ask-vault-pass
 ansible-playbook playbooks/getconfig-k8s.yml --ask-vault-pass 
 kubectl get nodes
+ansible-playbook playbooks/deploy-app-k8s.yml --ask-vault-pass -e scw_cluster_id="5317b6f1-4c39-40dd-a3cc-2909163326fd"
