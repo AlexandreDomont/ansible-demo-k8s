@@ -6,6 +6,11 @@ Ce dépôt permet de réaliser une **démo de bout en bout** :
 - **Vérification** du cluster  
 - **Déploiement** d’une application avec Ansible
 
+Modules utilisés :
+- `scaleway_k8s_cluster` de la collection `scaleway.scaleway`
+- `scw_k8s_pool`personnalisé pour gérer les pools k8s SCW API
+- `kubernetes.core.k8s` de la collection `kubernetes.core`
+
 > ✅ **Testé avec** : `ansible-core 2.15.x`
 
 ## 📁 Arborescence
