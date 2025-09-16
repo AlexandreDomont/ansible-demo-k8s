@@ -1,9 +1,8 @@
 - hosts: localhost
   gather_facts: true
   vars:
-    scw_cluster_id: "5317b6f1-4c39-40dd-a3cc-2909163326fd"
-    
-
+    scw_cluster_id: "48814b57-317f-4603-b68d-93f9bdb98422"
+  
   pre_tasks:
     - name: Vérifier si kubectl est déjà présent
       ansible.builtin.command: bash -lc 'command -v kubectl'

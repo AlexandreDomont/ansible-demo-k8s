@@ -72,10 +72,13 @@ head -n1 inventories/scw/group_vars/all/secret.yml
 Exemples de variables (à adapter) :
 
 ```yaml
-scw_access_key: "SCWXXXXXXXXXXXXXXXX"
-scw_secret_key: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-scw_default_project_id: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-scw_region: "fr-par"
+access_key: xxxxxxxxxxxxx
+secret_key: xxxxxxxxxxxxx
+default_organization_id: xxxxxx
+default_project_id: xxx
+scw_private_network_id: xxx
+scw_region: "xxx"
+scw_token: "xxx"
 ```
 
 > Le mot de passe Vault n’est **jamais** committé. Utilise `--ask-vault-pass` ou `--vault-id`.
