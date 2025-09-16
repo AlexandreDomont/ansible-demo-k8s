@@ -80,8 +80,8 @@ scw_private_network_id: xxx
 scw_region: "xxx"
 scw_token: "xxx"
 ```
-
 > Le mot de passe Vault n’est **jamais** committé. Utilise `--ask-vault-pass` ou `--vault-id`.
+> Il faut créer une clé API dans l'IAM de Scaleway
 
 ## ▶️ Exécution (pas à pas)
 
